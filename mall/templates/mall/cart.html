@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>购物车详情</title>
+</head>
+<body>
+<h1>用户 #{{ uid }}: {{ u_name }}的购物车</h1>
+    <ul>
+    {% for item in cart_items %}
+        <li>商品名：{{ item.product.name }}</li>
+        <li>数量：{{ item.num_items }}</li>
+        <li>单价：{{ item.product.product_price }}</li>
+        <li>添加时间：{{ item.add_time }}</li>
+        &nbsp
+    {% endfor %}
+    </ul>
+</body>
+</html>

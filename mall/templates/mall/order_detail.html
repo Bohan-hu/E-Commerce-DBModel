@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>订单详情</title>
+</head>
+<body>
+<h1>订单#{{ order_id }}详情</h1>
+    <ul>
+    {% for item in order_items %}
+        <li> {{ item.product.name }} x {{ item.final_quantity }} 件 </li>
+        &nbsp
+    {% endfor %}
+    </ul>
+</body>
+</html>

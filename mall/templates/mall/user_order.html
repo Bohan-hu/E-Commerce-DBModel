@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户订单</title>
+</head>
+<body>
+<h1>用户 #{{ uid }}: {{ u_name }}的订单</h1>
+    <ul>
+    {% for item in orders %}
+        <li><a href="{% url 'mall:order_detail' item.order_id %}">订单ID：{{ item.order_id }}</a></li>
+        <li>地址：{{ item.send_address }}</li>
+        <li>总价：{{ item.total_money }}</li>
+        &nbsp
+    {% endfor %}
+    </ul>
+</body>
+</html>
