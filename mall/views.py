@@ -1,3 +1,5 @@
+import json
+
 from django.core import serializers
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect, reverse
@@ -78,7 +80,8 @@ def user_order(request, user_id):
         entry['delivery_id']=item.delivery_id
         entry['payment_time']=item.payment_time
         entry['finish_time']=item.finish_time
-        entry['last_update_time']=item.last_update_time
+        entry['send_time']=item.send_time
+        entry['create_time']=item.create_time
         entry['total_money']=item.total_money
         data.append(entry)
     return JsonResponse(data, safe=False)
@@ -91,11 +94,173 @@ def order_detail(request, order_id):
     for item in order_items:
         entry = {}
         entry['product_id'] = item.product.product_id
+        entry['product_name'] = item.product.product_name
+        entry['product_catagory'] = item.product.catagory.catagory
         entry['quantity'] = item.final_quantity
         entry['price'] = item.product.product_price
+        entry['total_price']=item.final_quantity*item.product.product_price
         data.append(entry)
     # return render(request, 'mall/order_detail.html', context)
     return JsonResponse(data, safe=False)
 
+
+
+def user_address(request, user_id):
+    address = Address.objects.filter(info__exact=user_id)
+    # data = serializers.serialize("json", order_items)
+    data = []
+    # 订单商品ID+订单商品名+数量
+    for item in address:
+        entry = {}
+        entry['address'] = item.d_address
+        entry['name'] = item.d_name
+        entry['tel'] = item.d_tel
+        entry['address_id'] = item.address_id
+        data.append(entry)
+    # return render(request, 'mall/order_detail.html', context)
+    return JsonResponse(data, safe=False)
+
+def user_add_address(request):
+    if request.method == 'POST':
+        print("request", request.POST)
+        address=request.POST.get('address',0)
+        name=request.POST.get('name',0)
+        tel=request.POST.get('tel',0)
+        user_id = request.POST.get('userid',0)
+
+        info = UserLogin.objects.get(pk=user_id)
+        dict = {  'd_tel': tel, 'd_name':name, 'd_address':address, 'info':info }
+        print(dict)
+        Address.objects.create(**dict)
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse("Error Method!")
+
+def user_delete_address(request):
+    if request.method == 'POST':
+        print("request", request.POST)
+        Address.objects.filter(address_id__exact=request.POST.get('address_id')).delete()
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse("Error Method!")
+
+
+#TODO: 以下前端页面还未验证
+
+#TODO: 登录验证
 def login_validate(request):
-    pass
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        userlogin = UserLogin.objects.filter(username__exact=username).filter(password__exact=password)
+        ret = {}
+        if len(userlogin) == 0:
+            ret = { 'success': 0 }
+        else:
+            ret = { 'success': 1 , 'userid':userlogin[0].user_id }
+        return JsonResponse(data=ret, safe=False)
+
+def user_create_order(request):
+    # parameter: address_id, user_id, list of products
+    # Create a order and set it to
+    # set address, user, order status
+    # set
+    if request.method == 'POST':
+        post_data = json.loads(request.body.decode())
+        address_id = post_data['address_id']
+        product_list = post_data['product_list']
+        user_id = post_data['user_id']
+
+        address = Address.objects.get(pk=address_id)
+        user = UserLogin.objects.get(pk=user_id)
+        # Create the Order Object
+        dict = {  'address': address, 'user':user }
+        current_order = Orders.objects.create(**dict)
+        for product in product_list:
+            productObj = Product.objects.get(product_id__exact=product['product_id'])
+            dict = { 'product': productObj, 'order': current_order, 'final_quantity': product['quantity']}
+            OrderInclude.objects.create(**dict)
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse("Error Method!")
+
+def user_add_cart(request):
+    if request.method == 'POST':
+        product_id= request.POST.get('product_id',0)
+        quantity = request.POST.get('quantity',0)
+        user_id = request.POST.get('user_id',0)
+
+        cart = Cart.objects.get(info__exact=user_id)
+        product = Product.objects.get(pk=product_id)
+        # 先检查购物车内是否已经有相同商品
+        cartItem = CartInclude.objects.filter(cart__exact=cart).filter(product__exact=product)
+        if len(cartItem) != 0:
+            cartItem[0].num_items += int(quantity)
+            cartItem[0].save()
+        else:
+            dict = {  'product': product, 'cart': cart, 'num_items':quantity }
+            CartInclude.objects.create(**dict)
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse("Error Method!")
+
+def user_update_cart(request):
+    if request.method == 'POST':
+        product_id= request.POST.get('product_id',0)
+        quantity = request.POST.get('quantity',0)
+        user_id = request.POST.get('user_id',0)
+
+        cart = Cart.objects.get(info__exact=user_id)
+        product = Product.objects.get(pk=product_id)
+        # 先检查购物车内是否已经有相同商品
+        cartItem = CartInclude.objects.filter(cart__exact=cart).filter(product__exact=product)
+        cartItem[0].num_items = int(quantity)
+        cartItem[0].save()
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse("Error Method!")
+
+def user_remove_cart(request):
+    if request.method == 'POST':
+        product_id= request.POST.get('product_id',0)
+        user_id = request.POST.get('user_id',0)
+
+        cart = Cart.objects.get(info__exact=user_id)
+        product = Product.objects.get(pk=product_id)
+        # 先检查购物车内是否已经有相同商品
+        cartItem = CartInclude.objects.filter(cart__exact=cart).filter(product__exact=product)
+        cartItem[0].delete()
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse("Error Method!")
+
+def user_close_order(request):
+    if request.method == 'POST':
+        order_id = request.POST.get('product_id',0)
+        order = Orders.objects.get(pk=order_id)
+        order.order_status = -1
+        order.finish_time = timezone.now()
+        order.save()
+        # 更新商品库存
+        orderItems = OrderInclude.objects.filter(order__exact=order)
+        for item in orderItems:
+            item.product.storage += item.final_quantity
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse("Error Method!")
+
+#TODO: 确认订单
+def user_confirm_order(request):
+    if request.method == 'POST':
+        order_id = request.POST.get('product_id',0)
+        order = Orders.objects.get(pk=order_id)
+        order.order_status = 2
+        order.finish_time = timezone.now()
+        order.save()
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse("Error Method!")
+
+
+
+#TODO: 复合查询通用函数

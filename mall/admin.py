@@ -46,18 +46,18 @@ class CartIncludeInline(admin.StackedInline):
 @admin.register(Cart)
 class CartInfoAdmin(admin.ModelAdmin):
     inlines = [CartIncludeInline]
-    list_display = ('username','total_price','items_count')
-    def get_readonly_fields(self, request, obj=None):
-        if obj:
-            return ['cart_total_price']
+    list_display = ('username','items_count', 'last_update')
+    # def get_readonly_fields(self, request, obj=None):
+    #     if obj:
+    #         return ['cart_total_price']
 
 @admin.register(Product)
 class ProductInfoAdmin(admin.ModelAdmin):
-    list_display = ('catagory_name','name','price','sell_count')
+    list_display = ('product_id', 'catagory_name','name','price','sell_count', 'storage')
 
 @admin.register(Address)
 class AddressInfo(admin.ModelAdmin):
-    list_display = ('username', 'd_address', 'd_name', 'd_tel')
+    list_display = ('address_id', 'username', 'd_address', 'd_name', 'd_tel')
 
 # admin.site.register(Address)
 # admin.site.register(Cart, CartInfoAdmin)

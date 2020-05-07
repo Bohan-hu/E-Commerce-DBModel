@@ -30,12 +30,13 @@ class Address(models.Model):
 
 class Cart(models.Model):
     cart_id = models.AutoField(primary_key=True)
-    info = models.OneToOneField('Userinfo', models.CASCADE)
-    cart_total_price = models.FloatField()
-    def total_price(self):
-        return self.cart_total_price
+    info = models.OneToOneField('UserLogin', models.CASCADE)
+    last_update = models.DateTimeField(default=timezone.now)
+    # cart_total_price = models.FloatField()
+    # def total_price(self):
+    #     return self.cart_total_price
     def username(self):
-        return self.info.user.username
+        return self.info.username
     def items_count(self):
         items = CartInclude.objects.filter(cart__exact=self)
         itemcnt=0
@@ -47,7 +48,7 @@ class Cart(models.Model):
         db_table = 'cart'
         verbose_name_plural = "购物车管理"
     def __str__(self):
-        return self.info.user.username
+        return self.info.username
 
 class CartInclude(models.Model):
     entry_id = models.AutoField(primary_key = True)
@@ -59,23 +60,24 @@ class CartInclude(models.Model):
         return str(self.cart.cart_id) + str(self.product.product_id)
     class Meta:
         db_table = 'cart_include'
-    def save(self):
-    #     # 找到和其所有关联的订单，计算总价
+    def save(self, *args, **kwargs):
+        # 找到和其所有关联的订单，计算总价
         super(CartInclude, self).save()
-        print("saved")
-        all_items = CartInclude.objects.filter(cart__exact=self.cart)
-        sum = 0
-        for item in all_items:
-            sum += item.num_items * item.product.product_price
-        self.cart.cart_total_price = sum
-        print(sum)
+        # print("saved")
+        # all_items = CartInclude.objects.filter(cart__exact=self.cart)
+        # sum = 0
+        # for item in all_items:
+        #     sum += item.num_items * item.product.product_price
+        self.cart.last_update = timezone.now()
+        self.add_time = timezone.now()
         self.cart.save()
 
 @receiver(pre_delete, sender=CartInclude)
 def before_delete_cartItem(sender, instance, **kwargs):
-    reduced = instance.product.product_price * instance.num_items
-    print(reduced)
-    instance.cart.cart_total_price -= reduced
+    # reduced = instance.product.product_price * instance.num_items
+    # print(reduced)
+    # instance.cart.cart_total_price -= reduced
+    instance.cart.last_update = timezone.now()
     print("cart saved!")
     instance.cart.save()
 
@@ -91,18 +93,14 @@ class OrderInclude(models.Model):
         db_table = 'order_include'
         unique_together = (('order', 'product'))
         verbose_name_plural = "订单关联商品"
-    def save(self):
-        # 找到和其所有关联的订单，计算总价
+    def save(self, *args, **kwargs):
+        # 找到和其关联的订单，计算总价
         super(OrderInclude, self).save()
-        all_items = OrderInclude.objects.filter(order__exact=self.order)
-        sum = 0
-        for item in all_items:
-            sum += item.final_quantity * item.product.product_price
-            item.product.storage -= item.final_quantity # 更新库存
-            item.product.save()
-        self.order.total_money = sum
-        print(sum)
+        self.order.total_money += self.product.product_price * self.final_quantity
         self.order.save()
+        # 更新库存
+        self.product.storage -= self.final_quantity
+        self.product.save()
 
 @receiver(pre_delete, sender=OrderInclude)
 def before_delete_orderItem(sender, instance, **kwargs):
@@ -114,14 +112,14 @@ class Orders(models.Model):
     order_id = models.AutoField(primary_key=True)
     address = models.ForeignKey(Address, models.CASCADE)
     user = models.ForeignKey('UserLogin', models.CASCADE)
-    order_status = models.IntegerField()
-    delivery_company = models.CharField(max_length=255)
-    delivery_id = models.IntegerField()
-    payment_time = models.DateTimeField()
-    send_time = models.DateTimeField()
-    finish_time = models.DateTimeField()
-    last_update_time = models.DateTimeField()
-    total_money = models.FloatField()
+    order_status = models.IntegerField(default=0)
+    delivery_company = models.CharField(max_length=255, default="无")
+    delivery_id = models.IntegerField(default=0)
+    payment_time = models.DateTimeField(default=timezone.now)
+    send_time = models.DateTimeField(default=timezone.now)
+    finish_time = models.DateTimeField(default=timezone.now)
+    create_time = models.DateTimeField(default=timezone.now)
+    total_money = models.FloatField(default=0)
     def __str__(self):
         return "订单#" + str(self.order_id)
     def order_num(self):
@@ -237,7 +235,7 @@ class Userinfo(models.Model):
         if len(Cart.objects.filter(info__exact=self)) == 0:
             cart = Cart()
             cart.info = self
-            cart.cart_total_price = 0
+            # cart.cart_total_price = 0
             cart.save()
         self.user.userinfo_id=self.info_id
         self.user.save()
