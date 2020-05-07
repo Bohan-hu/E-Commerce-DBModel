@@ -30,10 +30,17 @@ class UserLoginAdmin(admin.ModelAdmin):
 class OrderIncludeInline(admin.StackedInline):
     model = OrderInclude
     extra = 0
+
+def setOrderSent(modeladmin, request, queryset):
+    queryset.update(order_status=1)
+
+setOrderSent.short_description ="设置订单发货"
+
 @admin.register(Orders)
 class OrderInfoAdmin(admin.ModelAdmin):
     inlines = [OrderIncludeInline]
-    list_display = ('order_num','user','send_address','delivery_company','delivery_id','total_money')
+    list_display = ('order_num','user','send_address','delivery_company','delivery_id','total_money','order_status')
+    actions = [setOrderSent]
 
 @admin.register(ProductCatagory)
 class ProductCatagoryAdmin(admin.ModelAdmin):

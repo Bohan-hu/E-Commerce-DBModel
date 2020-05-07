@@ -109,10 +109,16 @@ def before_delete_orderItem(sender, instance, **kwargs):
     instance.order.save()
 
 class Orders(models.Model):
+    status = (
+        (-1,'关闭'),
+        (0, '等待发货'),
+        (1, '已发货'),
+        (2, '已确认')
+    )
     order_id = models.AutoField(primary_key=True)
     address = models.ForeignKey(Address, models.CASCADE)
     user = models.ForeignKey('UserLogin', models.CASCADE)
-    order_status = models.IntegerField(default=0)
+    order_status = models.IntegerField(default=0,choices=status)
     delivery_company = models.CharField(max_length=255, default="无")
     delivery_id = models.IntegerField(default=0)
     payment_time = models.DateTimeField(default=timezone.now)
