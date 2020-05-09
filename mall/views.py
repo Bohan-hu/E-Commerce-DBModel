@@ -1,5 +1,5 @@
 import json
-
+import datetime
 from django.core import serializers
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect, reverse
@@ -61,7 +61,8 @@ def product_list(request):
 
 def product_catagories(request):
     catagories = ProductCatagory.objects.all()
-    data = [ item.catagory for item in catagories ]
+    data = [ {'value':item.catagory_id, 'text': item.catagory } for item in catagories ]
+    data.append({ 'value': -1, 'text':'请选择类别'})
     return JsonResponse(data, safe=False)
 
 def user_cart(request, user_id):
@@ -318,4 +319,113 @@ def user_profile(request, user_id):
     dict['telephone']=userinfo.u_phone
     dict['birthdate']=userinfo.birthdate
     return JsonResponse(dict, safe=False)
-# TODO: 复合查询通用函数
+
+def query_order(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        startTime = request.POST.get('startTime')
+        endTime = request.POST.get('endTime')
+        status = request.POST.get('status')
+        print(user_id)
+        user = UserLogin.objects.get(user_id__exact=user_id)
+        result = Orders.objects.filter(user__exact=user)
+        if startTime:
+            stTime = datetime.datetime.strptime(startTime, "%Y-%m-%d")
+            result = result.filter(create_time__gte=stTime)
+        if endTime:
+            edTime = datetime.datetime.strptime(endTime, "%Y-%m-%d")
+            result = result.filter(create_time__lte=edTime)
+        if status:
+            result = result.filter(order_status__exact=status)
+        data = []
+        # 订单商品ID+订单商品名+数量
+        for item in result:
+            entry = {}
+            entry['order_id'] = item.order_id
+            entry['address'] = item.address.__str__()
+            entry['order_status'] = item.order_status
+            entry['delivery_company'] = item.delivery_company
+            entry['delivery_id'] = item.delivery_id
+            entry['payment_time'] = item.payment_time
+            entry['finish_time'] = item.finish_time
+            entry['send_time'] = item.send_time
+            entry['create_time'] = item.create_time
+            entry['total_money'] = item.total_money
+            data.append(entry)
+        print(data)
+        return JsonResponse(data, safe=False)
+
+def query_product(request):
+    if request.method == 'POST':
+        lowPrice = request.POST.get('lowPrice')
+        highPrice = request.POST.get('highPrice')
+        name = request.POST.get('name')
+        catagory_id = request.POST.get('catagory_id')
+        print(catagory_id)
+        result = Product.objects.all()
+        if catagory_id != '-1':
+            print("Here")
+            catagory = ProductCatagory.objects.get(pk=catagory_id)
+            result = result.filter(catagory__exact=catagory)
+        if lowPrice:
+            result = result.filter(product_price__gte=lowPrice)
+        if highPrice:
+            result = result.filter(product_price__lte=highPrice)
+        if name:
+            result = result.filter(product_name__contains=name)
+        data = []
+        # 订单商品ID+订单商品名+数量
+        for item in result:
+            entry = {}
+            entry['product_id'] = item.product_id
+            entry['storage'] = item.storage
+            entry['catagory'] = item.catagory.catagory
+            entry['product_name'] = item.product_name
+            entry['detail'] = item.detail
+            entry['price'] = item.product_price
+            picts = [item.purl for item in ProductPicture.objects.filter(product__exact=item)]
+            entry['pictures'] = picts
+            entry['main_picture'] = ProductPicture.objects.filter(product__exact=item).filter(main_pict__exact=True)[
+                0].purl
+            entry['cart_quantity'] = 1
+            entry['total_price'] = entry['price']
+            data.append(entry)
+        print(data)
+        if len(data)==0:
+            entry = {}
+            entry['product_id'] = -1
+            entry['storage'] = -1
+            entry['catagory'] = -1
+            entry['product_name'] = "暂无数据"
+            entry['detail'] = "暂无数据"
+            entry['price'] = 0
+            picts = [ 'http://img1.imgtn.bdimg.com/it/u=1049769405,1588766320&fm=26&gp=0.jpg' ]
+            entry['pictures'] = picts
+            entry['main_picture'] = 'http://img1.imgtn.bdimg.com/it/u=1049769405,1588766320&fm=26&gp=0.jpg'
+            entry['cart_quantity'] = 0
+            entry['total_price'] = entry['price']
+            data.append(entry)
+        return JsonResponse(data,safe=False)
+        # for item in result:
+        #     entry = {}
+        #     entry['order_id'] = item.order_id
+        #     entry['address'] = item.address.__str__()
+        #     entry['order_status'] = item.order_status
+        #     entry['delivery_company'] = item.delivery_company
+        #     entry['delivery_id'] = item.delivery_id
+        #     entry['payment_time'] = item.payment_time
+        #     entry['finish_time'] = item.finish_time
+        #     entry['send_time'] = item.send_time
+        #     entry['create_time'] = item.create_time
+        #     entry['total_money'] = item.total_money
+        #     data.append(entry)
+        # return JsonResponse(data, safe=False)
+#         if
+#         order_id = request.POST.get('order_id',0)
+#         order = Orders.objects.get(pk=ordder_id)
+#         order.order_status = 1
+#         order.payment_time = timezone.now()
+#         order.save()
+#         return HttpResponse(status=200)
+
+# TODO: 查询商品、查询订单、软删除地址（迁移字段）

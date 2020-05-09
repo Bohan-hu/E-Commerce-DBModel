@@ -12,8 +12,8 @@ urlpatterns = [
     path('user_order/<int:user_id>', views.user_order, name='user_order'),
     path('user_profile/<int:user_id>', views.user_profile, name='user_profile'),
     path('order_detail/<int:order_id>', views.order_detail, name='order_detail'),
-    path('products', views.product_list, name='product_list'),
-    # path('product_catagory', views.product_catagory, name='product_catagory'),
+    path('products/', views.product_list, name='product_list'),
+    path('product_catagories/', views.product_catagories, name='product_catagories'),
     path('user_address/<int:user_id>', views.user_address, name='user_address'),
     path('user_add_address/',views.user_add_address, name='user_add_address'),
     path('user_delete_address/',views.user_delete_address, name='user_delete_address'),
@@ -24,4 +24,6 @@ urlpatterns = [
     path('user_close_order/',views.user_close_order, name='user_close_order'),
     path('user_confirm_order/',views.user_confirm_order, name='user_confirm_order'),
     path('user_pay_order/',views.user_pay_order, name='user_pay_order'),
+    path('query_order/',views.query_order, name='query_order'),
+    path('query_product/',views.query_product, name='query_product'),
 ]
