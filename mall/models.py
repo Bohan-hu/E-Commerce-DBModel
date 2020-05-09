@@ -106,7 +106,10 @@ class Orders(models.Model):
         (3, '订单完成')
     )
     order_id = models.AutoField(primary_key=True)
-    address = models.ForeignKey(Address, models.CASCADE)
+    # address = models.ForeignKey(Address, models.CASCADE)
+    address_line = models.CharField(max_length=255)
+    d_telephone = models.CharField(max_length=20)
+    d_name = models.CharField(max_length=10)
     user = models.ForeignKey('UserLogin', models.CASCADE)
     order_status = models.IntegerField(default=0,choices=status)
     delivery_company = models.CharField(max_length=255, default="无")
@@ -123,7 +126,7 @@ class Orders(models.Model):
     def username(self):
         return self.user.username
     def send_address(self):
-        return self.address.d_address + ' / ' + self.address.d_name + ' / ' +self.address.d_tel
+        return self.address_line + ' - ' + self.d_name + ' - ' +self.d_telephone
     class Meta:
         # managed = False
         db_table = 'orders'

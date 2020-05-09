@@ -97,7 +97,8 @@ def user_order(request, user_id):
     for item in u_order:
         entry = {}
         entry['order_id']=item.order_id
-        entry['address']=item.address.__str__()
+        #TODO: update
+        entry['address']=item.send_address()
         entry['order_status']=item.order_status
         entry['delivery_company']=item.delivery_company
         entry['delivery_id']=item.delivery_id
@@ -207,11 +208,14 @@ def user_create_order(request):
         address_id = post_data['address_id']
         product_list = post_data['product_list']
         user_id = post_data['user_id']
-
+        # TODO: the address set
         address = Address.objects.get(pk=address_id)
+        address_line = address.d_address
+        d_telephone = address.d_tel
+        d_name = address.d_tel
         user = UserLogin.objects.get(pk=user_id)
         # Create the Order Object
-        dict = {  'address': address, 'user':user }
+        dict = {  'address_line': address_line, 'd_telephone': d_telephone, 'd_name':d_name, 'user':user }
         current_order = Orders.objects.create(**dict)
         for product in product_list:
             productObj = Product.objects.get(product_id__exact=product['product_id'])
@@ -370,6 +374,7 @@ def query_order(request):
         for item in result:
             entry = {}
             entry['order_id'] = item.order_id
+            # TODO: update
             entry['address'] = item.address.__str__()
             entry['order_status'] = item.order_status
             entry['delivery_company'] = item.delivery_company
