@@ -299,6 +299,34 @@ def user_confirm_order(request):
     else:
         return HttpResponse("Error Method!")
 
+def user_update_address(request):
+    address_id = request.POST.get('address_id')
+    address_item = Address.objects.get(pk=address_id)
+    address_line = request.POST.get('address')
+    tel = request.POST.get('tel')
+    name = request.POST.get('name')
+    address_item.d_address=address_line
+    address_item.d_tel=tel
+    address_item.d_name=name
+    address_item.save()
+    return HttpResponse(status=200)
+
+def user_update_info(request):
+    user_id = request.POST.get('user_id')
+    print(user_id)
+    user = UserLogin.objects.get(pk=user_id)
+    userinfo = Userinfo.objects.get(user__exact=user)
+    birthdate_raw = request.POST.get('birthdate')
+    print(birthdate_raw)
+    birthdate = datetime.datetime.strptime(birthdate_raw,"%Y-%m-%d")
+    telephone = request.POST.get('telephone')
+    email = request.POST.get('email')
+    userinfo.email = email
+    userinfo.birthdate = birthdate
+    userinfo.u_phone = telephone
+    userinfo.save()
+    return HttpResponse(status=200)
+
 def user_pay_order(request):
     if request.method == 'POST':
         order_id = request.POST.get('order_id',0)
@@ -406,26 +434,6 @@ def query_product(request):
             entry['total_price'] = entry['price']
             data.append(entry)
         return JsonResponse(data,safe=False)
-        # for item in result:
-        #     entry = {}
-        #     entry['order_id'] = item.order_id
-        #     entry['address'] = item.address.__str__()
-        #     entry['order_status'] = item.order_status
-        #     entry['delivery_company'] = item.delivery_company
-        #     entry['delivery_id'] = item.delivery_id
-        #     entry['payment_time'] = item.payment_time
-        #     entry['finish_time'] = item.finish_time
-        #     entry['send_time'] = item.send_time
-        #     entry['create_time'] = item.create_time
-        #     entry['total_money'] = item.total_money
-        #     data.append(entry)
-        # return JsonResponse(data, safe=False)
-#         if
-#         order_id = request.POST.get('order_id',0)
-#         order = Orders.objects.get(pk=ordder_id)
-#         order.order_status = 1
-#         order.payment_time = timezone.now()
-#         order.save()
-#         return HttpResponse(status=200)
+
 
 # TODO: 查询商品、查询订单、软删除地址（迁移字段）

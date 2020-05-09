@@ -1,10 +1,3 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-# Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 import django.utils.timezone as timezone
 
@@ -31,9 +24,6 @@ class Cart(models.Model):
     cart_id = models.AutoField(primary_key=True)
     info = models.OneToOneField('UserLogin', models.CASCADE)
     last_update = models.DateTimeField(default=timezone.now)
-    # cart_total_price = models.FloatField()
-    # def total_price(self):
-    #     return self.cart_total_price
     def username(self):
         return self.info.username
     def items_count(self):
@@ -241,4 +231,5 @@ class Userinfo(models.Model):
         if len(Cart.objects.filter(info__exact=self.user)) == 0:
             cart = Cart()
             cart.info = self.user
+            cart.save()
             cart.save()

@@ -26,4 +26,7 @@ urlpatterns = [
     path('user_pay_order/',views.user_pay_order, name='user_pay_order'),
     path('query_order/',views.query_order, name='query_order'),
     path('query_product/',views.query_product, name='query_product'),
+    path('user_update_address/',views.user_update_address, name='user_update_address'),
+    path('login_validate/',views.login_validate, name='login_validate'),
+    path('user_update_info/',views.user_update_info, name='user_update_info'),
 ]
