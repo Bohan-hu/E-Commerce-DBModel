@@ -110,9 +110,10 @@ def before_delete_orderItem(sender, instance, **kwargs):
 class Orders(models.Model):
     status = (
         (-1,'关闭'),
-        (0, '等待发货'),
-        (1, '已发货'),
-        (2, '已确认')
+        (0, '等待支付'),
+        (1, '等待发货'),
+        (2, '已发货'),
+        (3, '订单完成')
     )
     order_id = models.AutoField(primary_key=True)
     address = models.ForeignKey(Address, models.CASCADE)
@@ -196,15 +197,15 @@ class UserLogin(models.Model):
     username = models.CharField(max_length=20,unique=True,verbose_name="用户名")
     password = models.CharField(max_length=255,verbose_name="密码")
     activate = models.BooleanField()
-    userinfo_id = models.IntegerField()
+    # userinfo_id = models.IntegerField()
     def email(self):
-        return Userinfo.objects.filter(info_id__exact=self.userinfo_id)[0].email
+        return Userinfo.objects.get(user__exact=self).email
     def phone(self):
-        return Userinfo.objects.filter(info_id__exact=self.userinfo_id)[0].u_phone
+        return Userinfo.objects.get(user__exact=self).u_phone
     def birthdate(self):
-        return Userinfo.objects.filter(info_id__exact=self.userinfo_id)[0].birthdate
+        return Userinfo.objects.get(user__exact=self).birthdate
     def level(self):
-        return Userinfo.objects.filter(info_id__exact=self.userinfo_id)[0].level
+        return Userinfo.objects.get(user__exact=self).level
     def order_count(self):
         return Orders.objects.filter(user__exact=self).count()
     def order_sum(self):
@@ -237,10 +238,7 @@ class Userinfo(models.Model):
     def save(self):
         # self.register_time =
         super(Userinfo, self).save()
-        if len(Cart.objects.filter(info__exact=self)) == 0:
+        if len(Cart.objects.filter(info__exact=self.user)) == 0:
             cart = Cart()
-            cart.info = self
-            # cart.cart_total_price = 0
+            cart.info = self.user
             cart.save()
-        self.user.userinfo_id=self.info_id
-        self.user.save()

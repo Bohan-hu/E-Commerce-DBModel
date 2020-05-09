@@ -272,7 +272,7 @@ def user_remove_cart(request):
 
 def user_close_order(request):
     if request.method == 'POST':
-        order_id = request.POST.get('product_id',0)
+        order_id = request.POST.get('order_id',0)
         order = Orders.objects.get(pk=order_id)
         order.order_status = -1
         order.finish_time = timezone.now()
@@ -281,6 +281,7 @@ def user_close_order(request):
         orderItems = OrderInclude.objects.filter(order__exact=order)
         for item in orderItems:
             item.product.storage += item.final_quantity
+            item.product.save()
         return HttpResponse(status=200)
     else:
         return HttpResponse("Error Method!")
@@ -288,15 +289,33 @@ def user_close_order(request):
 #TODO: 确认订单
 def user_confirm_order(request):
     if request.method == 'POST':
-        order_id = request.POST.get('product_id',0)
+        order_id = request.POST.get('order_id',0)
         order = Orders.objects.get(pk=order_id)
-        order.order_status = 2
+        order.order_status = 3
         order.finish_time = timezone.now()
         order.save()
         return HttpResponse(status=200)
     else:
         return HttpResponse("Error Method!")
 
+def user_pay_order(request):
+    if request.method == 'POST':
+        order_id = request.POST.get('order_id',0)
+        order = Orders.objects.get(pk=order_id)
+        order.order_status = 1
+        order.payment_time = timezone.now()
+        order.save()
+        return HttpResponse(status=200)
+    else:
+        return HttpResponse("Error Method!")
 
-
-#TODO: 复合查询通用函数
+def user_profile(request, user_id):
+    userlogin = UserLogin.objects.get(user_id=user_id)
+    userinfo = Userinfo.objects.get(user__exact=userlogin)
+    dict = {}
+    dict['password'] = userlogin.password
+    dict['email']=userinfo.email
+    dict['telephone']=userinfo.u_phone
+    dict['birthdate']=userinfo.birthdate
+    return JsonResponse(dict, safe=False)
+# TODO: 复合查询通用函数
