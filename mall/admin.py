@@ -4,13 +4,7 @@ from django.contrib import admin
 from django.contrib import admin
 from .models import *
 from django.contrib.auth.models import User, Group
-#
-# admin.site.unregister(User)
-# admin.site.unregister(Group)
-# class UserManagement(admin.ModelAdmin):
-#     fieldsets = [
-#         ('联系方式', {'fields': 'email', 'register_time', 'birthdate', 'level'
-#     ]
+
 
 class UserinfoInline(admin.StackedInline):
     model = Userinfo

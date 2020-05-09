@@ -8,9 +8,11 @@ urlpatterns = [
     # ex: /polls/5/
     path('<int:product_id>/', views.product_detail, name='product_detail'),
     path('user_cart/<int:user_id>', views.user_cart, name='user_cart'),
+    path('user_string_address/<int:user_id>', views.user_string_address, name='user_string_address'),
     path('user_order/<int:user_id>', views.user_order, name='user_order'),
     path('order_detail/<int:order_id>', views.order_detail, name='order_detail'),
     path('products', views.product_list, name='product_list'),
+    # path('product_catagory', views.product_catagory, name='product_catagory'),
     path('user_address/<int:user_id>', views.user_address, name='user_address'),
     path('user_add_address/',views.user_add_address, name='user_add_address'),
     path('user_delete_address/',views.user_delete_address, name='user_delete_address'),

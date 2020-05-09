@@ -39,6 +39,26 @@ def product_list(request):
         data.append(entry)
     return JsonResponse(data, safe=False)
 
+# def product_by_catagory(request):
+#     products = Product.objects.all()
+#     data = []
+#     # 订单商品ID+订单商品名+数量
+#     for item in products:
+#         entry = {}
+#         entry['product_id'] = item.product_id
+#         entry['storage'] = item.storage
+#         entry['catagory'] = item.catagory.catagory
+#         entry['product_name'] = item.product_name
+#         entry['detail'] = item.detail
+#         entry['price'] = item.product_price
+#         picts = [ item.purl for item in ProductPicture.objects.filter(product__exact=item)]
+#         entry['pictures']=picts
+#         entry['main_picture']=ProductPicture.objects.filter(product__exact=item).filter(main_pict__exact=True)[0].purl
+#         entry['cart_quantity']=1
+#         entry['total_price']=entry['price']
+#         data.append(entry)
+#     return JsonResponse(data, safe=False)
+
 def product_catagories(request):
     catagories = ProductCatagory.objects.all()
     data = [ item.catagory for item in catagories ]
@@ -46,9 +66,9 @@ def product_catagories(request):
 
 def user_cart(request, user_id):
     ulogin = get_object_or_404(UserLogin, pk=user_id)
-    uinfoid = ulogin.userinfo_id
-    u_info = get_object_or_404(Userinfo, pk = uinfoid)
-    u_cart = Cart.objects.get(info__exact=u_info)
+    # uinfoid = ulogin.userinfo_id
+    # u_info = get_object_or_404(Userinfo, pk = uinfoid)
+    u_cart = Cart.objects.get(info__exact=ulogin)
     cart_items = CartInclude.objects.filter(cart__exact=u_cart).order_by('-add_time')
     # context = { 'cart_items' : cart_items, 'u_name': ulogin.username, 'uid':ulogin.user_id }
     # return render(request, 'mall/cart.html', context)
@@ -56,6 +76,8 @@ def user_cart(request, user_id):
     # 订单商品ID+订单商品名+数量
     for item in cart_items:
         entry = {}
+        entry['id']=item.entry_id
+        entry['product_id']=item.product.product_id
         entry['name'] = item.product.product_name
         entry['quantity'] = item.num_items
         entry['price'] = item.product.product_price
@@ -119,6 +141,20 @@ def user_address(request, user_id):
         data.append(entry)
     # return render(request, 'mall/order_detail.html', context)
     return JsonResponse(data, safe=False)
+
+def user_string_address(request, user_id):
+    address = Address.objects.filter(info__exact=user_id)
+    # data = serializers.serialize("json", order_items)
+    data = []
+    # 订单商品ID+订单商品名+数量
+    for item in address:
+        entry = {}
+        entry['value'] = item.address_id
+        entry['text'] = item.__str__()
+        data.append(entry)
+    # return render(request, 'mall/order_detail.html', context)
+    return JsonResponse(data, safe=False)
+
 
 def user_add_address(request):
     if request.method == 'POST':
@@ -189,8 +225,10 @@ def user_add_cart(request):
         product_id= request.POST.get('product_id',0)
         quantity = request.POST.get('quantity',0)
         user_id = request.POST.get('user_id',0)
+        print(user_id,quantity,product_id)
 
-        cart = Cart.objects.get(info__exact=user_id)
+        userlogin = UserLogin.objects.get(pk=user_id)
+        cart = Cart.objects.get(info__exact=userlogin)
         product = Product.objects.get(pk=product_id)
         # 先检查购物车内是否已经有相同商品
         cartItem = CartInclude.objects.filter(cart__exact=cart).filter(product__exact=product)
@@ -222,14 +260,12 @@ def user_update_cart(request):
 
 def user_remove_cart(request):
     if request.method == 'POST':
-        product_id= request.POST.get('product_id',0)
-        user_id = request.POST.get('user_id',0)
-
-        cart = Cart.objects.get(info__exact=user_id)
-        product = Product.objects.get(pk=product_id)
-        # 先检查购物车内是否已经有相同商品
-        cartItem = CartInclude.objects.filter(cart__exact=cart).filter(product__exact=product)
-        cartItem[0].delete()
+        post_data = json.loads(request.body.decode())
+        # print(post_data)
+        for item in post_data:
+            id = item['id']
+            print(id)
+            CartInclude.objects.get(pk=id).delete()
         return HttpResponse(status=200)
     else:
         return HttpResponse("Error Method!")
